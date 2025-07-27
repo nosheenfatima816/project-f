@@ -1,51 +1,104 @@
-const signInBtnLink = document.querySelector('.signInBtn-link');
-const signUpBtnLink = document.querySelector('.signUpBtn-link'); // Assuming you have this link for switching forms
+// index.js
+
+// --- UI Toggle Logic (Existing, slightly modified for clarity) ---
+const signbtnlink = document.querySelector('.signin-link'); // Link to switch to Sign In form
+const signupbtnlink = document.querySelector('.signupbtn-link'); // Link to switch to Sign Up form
 const wrapper = document.querySelector('.wrapper');
 
-signInBtnLink.addEventListener('click', () => {
-    wrapper.classList.toggle('active');
-});
+// Add null checks for robustness, in case elements aren't found
+if (signupbtnlink && wrapper) {
+    signupbtnlink.addEventListener('click', (event) => {
+        event.preventDefault(); // Prevent the default link behavior (e.g., jumping to top)
+        wrapper.classList.add('active'); // Add 'active' class to show signup form (adjust based on your CSS)
+        console.log('Switched to Sign Up form');
+    });
+}
 
-signUpBtnLink.addEventListener('click', () => { // If you have a separate link to toggle to sign-up form
-    wrapper.classList.toggle('active');
-});
+if (signbtnlink && wrapper) {
+    signbtnlink.addEventListener('click', (event) => {
+        event.preventDefault(); // Prevent default link behavior
+        wrapper.classList.remove('active'); // Remove 'active' class to show login form (adjust based on your CSS)
+        console.log('Switched to Login form');
+    });
+}
 
+// --- Form Submission Logic (NEW & IMPORTANT) ---
 
-// --- New code for form submission ---
-const signupForm = document.getElementById('signup-form');
+// Get references to the actual form elements using their new IDs
+const loginForm = document.getElementById('loginForm');
+const signupForm = document.getElementById('signupForm');
 
-if (signupForm) {
-    signupForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); // Prevent default form submission
+// Event Listener for Login Form Submission
+if (loginForm) { // Check if the form exists before adding listener
+    loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault(); // PREVENT DEFAULT FORM SUBMISSION (page reload)
 
-        const username = document.getElementById('signupUsername').value;
-        const email = document.getElementById('signupEmail').value;
-        const password = document.getElementById('signupPassword').value;
+        // Get values from input fields
+        const username = document.getElementById('loginUsername').value;
+        const password = document.getElementById('loginPassword').value;
 
-        const userData = { username, email, password };
+        console.log('Login attempt:', { username, password });
 
+        // --- Send this data to your Backend API ---
         try {
-            const response = await fetch('http://localhost:8080/api/auth/register', { // Adjust port if different
+            const response = await fetch('http://localhost:3000/api/login', { // *** Ensure your backend server is running on this URL! ***
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(userData),
+                body: JSON.stringify({ username, password }),
             });
 
-            if (response.ok) {
-                const result = await response.text(); // Assuming backend returns a string message
-                alert(result); // Show success message
-                // Optionally, switch to login form or clear fields
-                wrapper.classList.remove('active'); // If 'active' makes it the sign-up form
-                signupForm.reset(); // Clear form fields
+            const data = await response.json(); // Parse the JSON response from your backend
+
+            if (response.ok) { // Check if the response status is 2xx (Success)
+                alert('Login successful: ' + data.message);
+                // Redirect user, store session/token, etc.
+                // Example: window.location.href = '/dashboard.html';
             } else {
-                const error = await response.text();
-                alert(`Registration failed: ${error}`); // Show error message from backend
+                alert('Login failed: ' + data.message); // Display error message from backend
             }
         } catch (error) {
-            console.error('Error during registration:', error);
-            alert('An unexpected error occurred. Please try again.');
+            console.error('Network or backend error during login:', error);
+            alert('Could not connect to the server. Please check your internet or backend server.');
+        }
+    });
+}
+
+// Event Listener for Sign Up Form Submission
+if (signupForm) { // Check if the form exists before adding listener
+    signupForm.addEventListener('submit', async (event) => {
+        event.preventDefault(); // PREVENT DEFAULT FORM SUBMISSION (page reload)
+
+        // Get values from input fields
+        const username = document.getElementById('signupUsername').value;
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+
+        console.log('Sign Up attempt:', { username, email, password });
+
+        // --- Send this data to your Backend API ---
+        try {
+            const response = await fetch('http://localhost:3000/api/signup', { // *** Ensure your backend server is running on this URL! ***
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, email, password }),
+            });
+
+            const data = await response.json(); // Parse the JSON response from your backend
+
+            if (response.ok) { // Check if the response status is 2xx (Success)
+                alert('Sign Up successful: ' + data.message);
+                // Optionally, switch to the login form after successful signup
+                // if (wrapper) wrapper.classList.remove('active');
+            } else {
+                alert('Sign Up failed: ' + data.message); // Display error message from backend
+            }
+        } catch (error) {
+            console.error('Network or backend error during signup:', error);
+            alert('Could not connect to the server. Please check your internet or backend server.');
         }
     });
 }
